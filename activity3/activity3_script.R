@@ -1,6 +1,6 @@
 library(tidyverse)
 
-lemming = read_csv('/Users/gzs/Desktop/ENVST 206/ENVDS/activity3/lemming_herbivory.csv')
+lemming = read_csv('https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/activity3/lemming_herbivory.csv')
 lemming$herbivory <- as.factor(lemming$herbivory)
 
 plot(lemming$CH4_Flux ~ lemming$herbivory, xlab ="Treatment", 
@@ -13,6 +13,7 @@ shapiro.test(lemming$CH4_Flux[lemming$herbivory == "Ex"])
 
 bartlett.test(lemming$CH4_Flux ~ lemming$herbivory)
 
+# Q1
 t.test(lemming$CH4_Flux ~ lemming$herbivory)
-
+mean(lemming$CH4_Flux[lemming$herbivory == ])
 
