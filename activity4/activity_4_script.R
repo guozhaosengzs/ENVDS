@@ -2,7 +2,6 @@ library(tidyverse)
 library(ggplot2)
 library(ggpubr)
 
-
 beaver_data <- read_csv('https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/activity4/beaver_dam.csv')
 
 #1
@@ -69,8 +68,9 @@ pheno$urID <- ifelse(pheno$siteDesc == "Urban",1,0)
 
 #6
 mlr <- lm(pheno$doy ~  pheno$Tmax  + pheno$Prcp + pheno$elev + pheno$urID)
-mlFitted <- fitted(mlr)
-mlFitted 
+layout(matrix(c(1,3,2,4),2,2))
+plot(mlr)
+
 
 #7
 summary(mlr)
