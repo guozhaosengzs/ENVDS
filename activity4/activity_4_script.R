@@ -75,3 +75,7 @@ plot(mlr)
 #7
 summary(mlr)
 
+#8
+#9
+#10
+
