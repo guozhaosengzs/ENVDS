@@ -48,4 +48,38 @@ gAll$gdiff <- ((gAll$area66-gAll$area15)/gAll$area66)*100
 gl.chg <- ggplot(gAll, aes(x = area66, y = gdiff)) + geom_point(size=2)
 gl.chg
 
+####Q8####
+g1966@data <- left_join(g1966@data, gAll, by="GLACNAME")
+spplot(g1966, "gdiff", main="% change in area", col="transparent")
 
+discription1 = summary(gAll$gdiff)
+sd(gAll$gdiff)
+
+discription2 = summary(gAll$area66)
+
+
+min_diff = gAll[gAll$gdiff == discription1[1], "GLACNAME"]
+max_diff =gAll[gAll$gdiff == discription1[6], "GLACNAME"]
+
+min_area66 = gAll[gAll$area66 == discription2[1], "GLACNAME"]
+max_area66 =gAll[gAll$area66 == discription2[6], "GLACNAME"]
+
+gAll[gAll$GLACNAME == min_area66, "gdiff"]
+gAll[gAll$GLACNAME == max_area66, "gdiff"]
+
+
+g1966@polygons
+
+#####9####
+min66 <- g1966[g1966@data$GLACNAME == min_diff,]
+min66_15 <- g2015[g2015@data$GLACNAME == min_diff,]
+plot(min66, main = "Pumpelly Glacier Area Change from 1966 to 2015 (10.30%)", col="Blue")
+plot(min66_15, col="dodgerblue2", add=TRUE)
+legend("bottomright", legend=c("1996", "2015"), title = "Years", fill=c("Blue", "dodgerblue2"), horiz=TRUE)
+
+
+max66 <- g1966[g1966@data$GLACNAME == max_diff,]
+max66_15 <- g2015[g2015@data$GLACNAME == max_diff,]
+plot(max66, main = "Boulder Glacier Area Change from 1966 to 2015 (84.72%)",border="Black",col="turquoise4")
+plot(max66_15, col="cyan2", border="Black",add=TRUE)
+legend("bottomleft", legend=c("1996", "2015"), title = "Years", fill=c("turquoise4", "cyan2"), horiz=TRUE)
