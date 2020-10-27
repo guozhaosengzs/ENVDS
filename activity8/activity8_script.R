@@ -9,14 +9,20 @@ rdatB3 <- raster(paste0(dirR,"/sentinel/T18TVN_20190814T154911_B03_20m.tif"))
 rdatB4 <- raster(paste0(dirR,"/sentinel/T18TVN_20190814T154911_B04_20m.tif"))
 rdatB8 <- raster(paste0(dirR,"/sentinel/T18TVN_20190814T154911_B08_20m.tif"))
 
+
+#Q1#####
 plot(rdatB2/10000)
 
 rgbS <- stack(rdatB4,rdatB3,rdatB2)/10000
 plotRGB(rgbS, scale=2)
 plotRGB(rgbS, stretch="lin")
 
+
+#Q2#####
 plotRGB(rgbS, stretch="lin", maxpixels = rgbS@ncols * rgbS@nrows)
 
+
+#Q3#####
 
 #calculate NDVI
 #NIR-red/(NIR + RED)
