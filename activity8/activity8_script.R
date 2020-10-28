@@ -1,6 +1,7 @@
 library(raster)
-library(ggplot2)
+library(tidyverse)
 library(rgdal)
+library(ggpubr)
 
 dirR <- "C:\\Users\\guozh\\Desktop\\ENVDS\\activity8\\a08\\oneida"
 
@@ -55,3 +56,56 @@ landExtract <-  data.frame(landcID = as.factor(rep(c("algae","water","agri","for
                            x=c(algae@coords[,1],water@coords[,1],agri@coords[,1],forest@coords[,1],wetlands@coords[,1]),
                            y=c(algae@coords[,2],water@coords[,2],agri@coords[,2],forest@coords[,2],wetlands@coords[,2]))
 
+#Q7####
+allbands <-  stack(rdatB2, rdatB3, rdatB4,rdatB8)/10000
+
+ExtractOut <- raster::extract(allbands,landExtract[,2:3])
+colnames(ExtractOut) <- c("B02","B03","B04","B08")
+
+rasterEx <- cbind(landExtract,ExtractOut)
+head(rasterEx)
+
+ggplot(data=rasterEx, aes(x=B02, y=B03, color=landcID))+
+  geom_point(alpha=0.6)+
+  theme_classic()
+
+B_infR <- ggplot(data=rasterEx, aes(x=B02, y=B08, color=landcID))+
+  geom_point(alpha=0.6, size = 1.5, shape = 19)+
+  ggtitle("Blue Light Versus Near Infrared Reflectance") +
+  xlab("Near Infrared") + ylab("Blue") +
+  theme_classic() 
+
+G_infR <- ggplot(data=rasterEx, aes(x=B03, y=B08, color=landcID))+
+  geom_point(alpha=0.6, size = 1.5, shape = 19)+
+  ggtitle("Green Light Versus Near Infrared Reflectance") +
+  xlab("Near Infrared") + ylab("Green") +
+  theme_classic() 
+
+R_infR <- ggplot(data=rasterEx, aes(x=B04, y=B08, color=landcID))+
+  geom_point(alpha=0.6, size = 1.5, shape = 19)+
+  ggtitle("Red Light Versus Near Infrared Reflectance") +
+  xlab("Near Infrared") + ylab("Red") +
+  theme_classic() 
+
+ggarrange(R_infR, B_infR, G_infR, ncol = 1, nrow = 3, common.legend = TRUE, legend = "right")
+
+#Q8####
+
+ExtractOut1 <- raster::extract(NDVI,landExtract[,2:3])
+
+rasterEx1 <- cbind(landExtract,ExtractOut1)
+colnames(rasterEx1) <- c("landcID", "x", "y", "NDVI")
+
+ggplot(data = rasterEx1, aes(x=landcID, y=NDVI, fill=landcID))+
+  geom_violin(scale = "width", size = 0.8)+ 
+  geom_boxplot(width=0.2,size=0.3, fill="grey67")+
+  ggtitle("NDVI Distribution by Landcover Classes") +
+  theme_classic() 
+
+#Q9####
+
+agri_fore_wetl <- rasterEx1 %>% filter(landcID == "agri"| landcID == "forest" | landcID == "wetland")
+landc.aov <- aov(data = agri_fore_wetl, NDVI ~ landcID)
+summary(landc.aov)
+
+TukeyHSD(landc.aov)
