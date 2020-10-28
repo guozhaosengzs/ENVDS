@@ -20,9 +20,9 @@ plotRGB(rgbS, stretch="lin")
 
 #Q2#####
 plotRGB(rgbS, stretch="lin", maxpixels = rgbS@ncols * rgbS@nrows)
-
-
 #Q3#####
+#Q4#####
+
 
 #calculate NDVI
 #NIR-red/(NIR + RED)
