@@ -17,11 +17,16 @@ rgbS <- stack(rdatB4,rdatB3,rdatB2)/10000
 plotRGB(rgbS, scale=2)
 plotRGB(rgbS, stretch="lin")
 
-
 #Q2#####
 plotRGB(rgbS, stretch="lin", maxpixels = rgbS@ncols * rgbS@nrows)
+
 #Q3#####
+rgbS@ncols * rgbS@nrows
+
 #Q4#####
+plot(rdatB8, maxpixels = rgbS@ncols * rgbS@nrows)
+rgbS1 <- stack(rdatB8,rdatB3,rdatB2)/10000
+plotRGB(rgbS1, stretch="lin", maxpixels = rgbS@ncols * rgbS@nrows)
 
 
 #calculate NDVI
