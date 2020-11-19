@@ -1,0 +1,30 @@
+---
+title: |
+    | Drought in Rhode Island 
+    |
+    | Environmental Data Science
+author: "Zhaosen Guo"
+date: "11/20/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+Rhode Island is a state in the United States situated on the north-east coast. It is in New England and  known for sandy shores and seaside Colonial towns. It would probably come to most people around the nation as a surprise, that despite of its coastal location, Rhode Island has been experiencing a rather harsh drought in the past few months. This project aims to investigate the shortage of water in this state, which is not commonly covered by national news media, and explore factors such as time, place, and residents affected.  
+
+# Problem Statement 
+The ultimate question that I seek to answer is: 
+Looking at relevant data in recent years, has the drought in Rhode Island been "expected" in terms of timing and magnitude? 
+
+# Data and Methodology  
+## The Data
+The data used in this project is retrieved from The U.S. Drought Monitor (https://droughtmonitor.unl.edu/) hosted by The National Drought Mitigation Center at University of Nebraska-Lincoln. 
+The data are weekly collections of categorical scales of drought values, based on percentage of areas and populations affected. A sample of the data can be seen here:
+```{r Env, include=FALSE}
+#setup the environment
+library(tidyverse)
+```
+
