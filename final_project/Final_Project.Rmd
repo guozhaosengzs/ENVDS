@@ -10,21 +10,49 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
 # Introduction
-Rhode Island is a state in the United States situated on the north-east coast. It is in New England and  known for sandy shores and seaside Colonial towns. It would probably come to most people around the nation as a surprise, that despite of its coastal location, Rhode Island has been experiencing a rather harsh drought in the past few months. This project aims to investigate the shortage of water in this state, which is not commonly covered by national news media, and explore factors such as time, place, and residents affected.  
+Rhode Island is a state in the United States situated on the north-east coast. It is in New England and  known for sandy shores and seaside Colonial towns. It would probably come to most people around the nation as a surprise, that despite of its coastal location, Rhode Island has been experiencing a rather harsh drought in the past few months. This project aims to investigate the shortage of water in this state, which is not commonly covered by national news media, and explore factors such as time, place, and residents affected. 
+
+***  
 
 # Problem Statement 
 The ultimate question that I seek to answer is: 
 Looking at relevant data in recent years, has the drought in Rhode Island been "expected" in terms of timing and magnitude? 
 
 # Data and Methodology  
-## The Data
-The data used in this project is retrieved from The U.S. Drought Monitor (https://droughtmonitor.unl.edu/) hosted by The National Drought Mitigation Center at University of Nebraska-Lincoln. 
-The data are weekly collections of categorical scales of drought values, based on percentage of areas and populations affected. A sample of the data can be seen here:
+## Original Data
+The data used in this project is retrieved from _[The U.S. Drought Monitor](https://droughtmonitor.unl.edu/)_ hosted by The National Drought Mitigation Center at University of Nebraska-Lincoln. 
+The data are weekly collections of categorical scales of drought values, based on percentage of areas and populations affected. A sample of the selected columns of the first 5 rows from the raw data can be seen here:
 ```{r Env, include=FALSE}
 #setup the environment
 library(tidyverse)
+library(ggplot2)
 ```
+```{r Import data, include=FALSE, results='asis'}
+data.area <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/area_p_6yrs.csv")
+data.pop <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/population_p_6yrs.csv")
+```
+```{r Display data sample, results='asis', echo = FALSE}
+kable(head(data.area[,2:10]))
+```
+It shows that the percent of areas under different drought categories -  
+__None__ for normal, __D0__ for abnormally dry, __D1__ for moderate drought, __D2__ for severe drought, __D3__ for extreme drought, and __D4__ for exceptional drought.  
+For more detailed classification parameters, please refer to _[this webpage](https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx)_.  
+One note: each level of drought automatically covers the previous one, for example, for the week of 2020-11-17 in RI, although the numerical values is 0 under __D0__, it is assumed that 100% of the area there has to be "abnormally dry" before being considered "moderate drought" or "severe drought" in __D1__ and __D2__. Similarly, although only 55.86% is under __D1__, in fact the rest of 44.14% under __D2__ has to be qualified in __D1__ before getting a more severe rating.  
+  
+In addition to the comprehensive data shown, some GIS data will be introduced to visualize the drought on a map. 
+
+## Data Cleaning and Merging
+The first step to make a data set usable is to clean it, and here I will be removing irrelevant columns in both the population and area data sets, such as $StateAbbreviation. After that, for the easy of accessing the data, I will merge the two data set based on respective weeks. The categories are simply labeled as "Dx" in both sets, so to avoid confusion, I will rename columns prior to the merging.
+
+## Research Methods
+First, I will investigate the duration of drought in each year and their patterns, focusing on the overall week counts. Then, the severity of the drought throughout the years will be checked under statistically analysis on proportion of the areas under different level of drought in each season. Moreover, I will introduce an index that weights all the factors can combine 5 categories into one single representative number. Lastly, the population and areas will be compared and contrasted to see if the drought has changed its patterns, and it will be aided with some map images.
+
+***  
+
+# Analysis 
+
 
