@@ -31,6 +31,8 @@ The data are weekly collections of categorical scales of drought values, based o
 library(tidyverse)
 library(ggplot2)
 library(ggpubr)
+library(sp)
+library(rgdal)
 ```
 ```{r Import data, include=FALSE, results='asis'}
 data.area <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/area_p_6yrs.csv")
@@ -44,7 +46,7 @@ __None__ for normal, __D0__ for abnormally dry, __D1__ for moderate drought, __D
 For more detailed classification parameters, please refer to _[this webpage](https://droughtmonitor.unl.edu/About/AbouttheData/DroughtClassification.aspx)_.  
 One note: each level of drought automatically covers the previous one, for example, for the week of 2020-11-17 in RI, although the numerical values is 0 under __D0__, it is assumed that 100% of the area there has to be "abnormally dry" before being considered "moderate drought" or "severe drought" in __D1__ and __D2__. Similarly, although only 55.86% is under __D1__, in fact the rest of 44.14% under __D2__ has to be qualified in __D1__ before getting a more severe rating.  
   
-In addition to the comprehensive data shown, some GIS data will be introduced to visualize the drought on a map. 
+In addition to the comprehensive data shown, some data will be introduced to visualize the drought on a map. 
 
 ## Data Cleaning and Merging
 The first step to make a data set usable is to clean it, and here I will be removing irrelevant columns in both the population and area data sets, such as $StateAbbreviation. After that, for the easy of accessing the data, I will merge the two data set based on respective weeks. The categories are simply labeled as "Dx" in both sets, so to avoid confusion, I will rename columns prior to the merging.
@@ -142,10 +144,14 @@ corr
 ```
 The plot actually shows a pretty solid linear correlations, however, the outliers are still worthy of inspection.  
   
-To do so, I first calculated the absolute proportional differences between __DSCI_Area__ and __DSCI_Pop__ $$\frac{|\text{DSCI}_{Area} - \text{DSCI}_{population}|}{\text{DSCI}_{Area} + \text{DSCI}_{population}}$$, and picked the top three weeks that the most discrepancies that are present: 2017-08-15, 2015-08-04, 2018-09-18.
+To do so, I first calculated the absolute proportional differences between __DSCI_Area__ and __DSCI_Pop__ $$\frac{|\text{DSCI}_{Area} - \text{DSCI}_{population}|}{\text{DSCI}_{Area} + \text{DSCI}_{population}}$$, and look at dates that are interesting. 
 ```{r diff, include=FALSE}
 data.complete$DSCI_Diff = abs(data.complete$DSCI_Area - data.complete$DSCI_Pop) / (data.complete$DSCI_Area + data.complete$DSCI_Pop)
+data.complete$DSCI_Diff = data.complete$DSCI_Area - data.complete$DSCI_Pop
 ```
+Here are two examples of weeks where Index values differ a lot between population and area. 
+![2015-07-28, when DSCI_Area = 2 * DSCI_Pop](path-to-image-here)
+
 
 
 
