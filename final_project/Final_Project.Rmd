@@ -30,6 +30,7 @@ The data are weekly collections of categorical scales of drought values, based o
 #setup the environment
 library(tidyverse)
 library(ggplot2)
+library(ggpubr)
 ```
 ```{r Import data, include=FALSE, results='asis'}
 data.area <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/area_p_6yrs.csv")
@@ -48,11 +49,103 @@ In addition to the comprehensive data shown, some GIS data will be introduced to
 ## Data Cleaning and Merging
 The first step to make a data set usable is to clean it, and here I will be removing irrelevant columns in both the population and area data sets, such as $StateAbbreviation. After that, for the easy of accessing the data, I will merge the two data set based on respective weeks. The categories are simply labeled as "Dx" in both sets, so to avoid confusion, I will rename columns prior to the merging.
 
+```{r Data Processing, include=FALSE}
+data.area.lite <- data.area %>% select(c(MapDate, None, D0, D1, D2, D3, D4))
+colnames(data.area.lite) <- 
+  c("MapDate","Area_None","Area_D0", "Area_D1", "Area_D2", "Area_D3", "Area_D4")
+
+data.pop.lite <- data.pop %>% select(c(MapDate, None, D0, D1, D2, D3, D4, ValidStart, ValidEnd))
+colnames(data.pop.lite) <- 
+  c("MapDate", "Pop_None", "Pop_D0", "Pop_D1", "Pop_D2", "Pop_D3", "Pop_D4", "ValidStart", "ValidEnd")
+
+data.complete <- full_join(data.area.lite, data.pop.lite, by = c("MapDate" = "MapDate"))
+
+# Label groups by year (e.g. 2014-11-18 ~ 2015-11-16 as group 1) 
+# Due to keeping weeks consistent, each year starting from 2014-11-18 is counted as 51 weeks
+data.complete$Year_Group <- NA
+data.complete$Year_Group[263:314] <- 1
+data.complete$Year_Group[211:262] <- 2
+data.complete$Year_Group[159:210] <- 3
+data.complete$Year_Group[107:158] <- 4
+data.complete$Year_Group[55:106] <- 5
+data.complete$Year_Group[3:54] <- 6
+#two weeks are left out, so we exclude them from the dataset
+data.complete <- data.complete[3:314,]
+```
+
 ## Research Methods
 First, I will investigate the duration of drought in each year and their patterns, focusing on the overall week counts. Then, the severity of the drought throughout the years will be checked under statistically analysis on proportion of the areas under different level of drought in each season. Moreover, I will introduce an index that weights all the factors can combine 5 categories into one single representative number. Lastly, the population and areas will be compared and contrasted to see if the drought has changed its patterns, and it will be aided with some map images.
 
 ***  
 
 # Analysis 
+## Yearly Data
+The yearly average of percentage under each drought category can be derived using group_by & summarise_at from the dplyr package, and the result is:
+
+```{r aggregate mean area,echo=FALSE}
+data.year.mean.area <- group_by(data.complete, Year_Group) %>%
+  summarise_at(vars(Area_None, Area_D0, Area_D1, Area_D2, Area_D3, Area_D4), mean, na.rm = TRUE) 
+kable(data.year.mean.area)
+```
+
+In terms of areas under each categories, it is clear that there are some discrepancies among the average area proportions. It is also interesting to see that for the past 6 years Rhode Island has never gotten to a category D4 drought on its land. Also, in terms of the $Year_Group variable, "1" means the year cycle closest to the date of data retrieval (Nov. 18 2020-2019).
+
+Now lets look at the populations and check on the average percent affected by drought:
+```{r aggregate mean pop,echo=FALSE}
+data.year.mean.pop <- group_by(data.complete, Year_Group) %>%
+  summarise_at(vars(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3, Pop_D4), mean, na.rm = TRUE) 
+kable(data.year.mean.pop)
+```
+And now, to answer the question of if the proportions of each drought categories have been consistent throughout the years, a MANOVA test is used. Much like ANOVA, MANOVA simply adds a "multivariate" to the front and the null hypothesis is that the means on multiple dependent variables (in this case the percent land/population under each categories) are equal across groups; the alternative hypothesis is that the variables are not the same, hence the patterns in the recent years are different.
+
+```{r MANOVA, echo=FALSE}
+# Excluding D4 in the process because all entries are 0
+print("Manova on Area")
+manova.area <- manova(cbind(Area_None, Area_D0, Area_D1, Area_D2, Area_D3) ~ Year_Group, data = data.complete)
+summary(manova.area, tol=0)
+print("---------------------------------------------------------")
+print("Manova on population")
+manova.pop <- manova(cbind(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3) ~ Year_Group, data = data.complete)
+summary(manova.pop, tol=0)
+```
+From the results of two MANOVA tests above, it is clear to observe that both tests yielded an extremely low P-value, meaning the null hypothesis should be rejected and that the proportions of drought categories change from year to year. Moreover, the __Pillai__ in the summary output is short for "Pillai-Bartlett Trace." It is used as a test statistic in MANOVA, a positive valued statistic ranging from 0 to 1. Increasing values means that effects are contributing more to the model, and from the result both Pillai's trace seems to have pretty high values.
+
+## Drought Severity And Coverage Index
+The DSCI is a proposed way to convert the drought levels to a single value that provides a more comprehensive representation of the situation in a specific location. This equation here explains how the weighted sum is calculated:  
+$$\text{DSCI}= 0 \cdot \text{None} + 1 \cdot D_0 + 2 \cdot D_1 + 3 \cdot D_2 + 4\cdot D_3 + 5\cdot D_4$$
+So after calculating the appropriate DSCI, we can visualize it: 
+```{r DSCI, out.width='\\textwidth', fig.height = 6, fig.align='center', echo=FALSE}
+data.complete$DSCI_Area = 1 * data.complete$Area_D0 + 2 * data.complete$Area_D1 + 3 * data.complete$Area_D2 + 4 * data.complete$Area_D3 + 5 * data.complete$Area_D4
+
+data.complete$DSCI_Pop = 1 * data.complete$Pop_D0 + 2 * data.complete$Pop_D1 + 3 * data.complete$Pop_D2 + 4 * data.complete$Pop_D3 + 5 * data.complete$Pop_D4
+
+DSCI <- ggplot(data = data.complete) + 
+  geom_line(aes(x = ValidStart, y = DSCI_Area, colour = "Area"), size = 1, alpha = 0.7) + 
+  geom_line(aes(x = ValidStart, y = DSCI_Pop, colour = "Population"), size = 1, alpha = 0.7) + 
+  labs(title="Drought Severity And Coverage Index of Rhode Island (2014 - 2020)", x ="Date", y = "DSCI") +
+  scale_colour_manual(name = "Variable of Interest", values=c(Area ="yellow4", Population="brown")) +
+  theme_classic()
+DSCI
+```
+And just like the results we obtained from the previous tests, the overall DSCI index has not shown any visible patterns; in additions, the recent spike of drought seems to be easing off in some degree, but it is still higher than normal. 
+
+## Population vs. Area 
+The graph above provides a good representation of the drought severity, however, it also highlighted the differences between two metrics that were used in the data set. The percent area effected and the percent population effected some times have discrepancies. With a state of 1,212 mi² and 1.059 million residents, that different could be huge in situations like the trends shown from 2015 to 2016, as well as in 2018.  
+Here is an overview of DSCI(Area) plotted against DSCI(Population):
+```{r correlation, out.width='\\textwidth', fig.height = 4, fig.align='center', echo=FALSE, message=FALSE}
+corr <- ggscatter(data.complete, x = "DSCI_Area", y = "DSCI_Pop", 
+          add = "reg.line", add.params = list(color = "blue", fill = "lightgray"), 
+          conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "Area Index", ylab = "Population Index")
+corr
+```
+The plot actually shows a pretty solid linear correlations, however, the outliers are still worthy of inspection.  
+  
+To do so, I first calculated the absolute proportional differences between __DSCI_Area__ and __DSCI_Pop__ $$\frac{|\text{DSCI}_{Area} - \text{DSCI}_{population}|}{\text{DSCI}_{Area} + \text{DSCI}_{population}}$$, and picked the top three weeks that the most discrepancies that are present: 2017-08-15, 2015-08-04, 2018-09-18.
+```{r diff, include=FALSE}
+data.complete$DSCI_Diff = abs(data.complete$DSCI_Area - data.complete$DSCI_Pop) / (data.complete$DSCI_Area + data.complete$DSCI_Pop)
+```
+
 
 
