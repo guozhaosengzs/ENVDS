@@ -31,12 +31,13 @@ The data are weekly collections of categorical scales of drought values, based o
 library(tidyverse)
 library(ggplot2)
 library(ggpubr)
-library(sp)
-library(rgdal)
+library(png)
 ```
 ```{r Import data, include=FALSE, results='asis'}
-data.area <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/area_p_6yrs.csv")
-data.pop <- read_csv("https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/population_p_6yrs.csv")
+data.area <- read_csv(
+  "https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/area_p_6yrs.csv")
+data.pop <- read_csv(
+  "https://raw.githubusercontent.com/guozhaosengzs/ENVDS/master/final_project/population_p_6yrs.csv")
 ```
 ```{r Display data sample, results='asis', echo = FALSE}
 kable(head(data.area[,2:10]))
@@ -56,14 +57,18 @@ data.area.lite <- data.area %>% select(c(MapDate, None, D0, D1, D2, D3, D4))
 colnames(data.area.lite) <- 
   c("MapDate","Area_None","Area_D0", "Area_D1", "Area_D2", "Area_D3", "Area_D4")
 
-data.pop.lite <- data.pop %>% select(c(MapDate, None, D0, D1, D2, D3, D4, ValidStart, ValidEnd))
+data.pop.lite <- data.pop %>% select(c(MapDate, None, D0, D1, 
+                                       D2, D3, D4, ValidStart, ValidEnd))
+
 colnames(data.pop.lite) <- 
-  c("MapDate", "Pop_None", "Pop_D0", "Pop_D1", "Pop_D2", "Pop_D3", "Pop_D4", "ValidStart", "ValidEnd")
+  c("MapDate", "Pop_None", "Pop_D0", "Pop_D1", 
+    "Pop_D2", "Pop_D3", "Pop_D4", "ValidStart", "ValidEnd")
 
-data.complete <- full_join(data.area.lite, data.pop.lite, by = c("MapDate" = "MapDate"))
+data.complete <- full_join(
+  data.area.lite, data.pop.lite, by = c("MapDate" = "MapDate"))
 
-# Label groups by year (e.g. 2014-11-18 ~ 2015-11-16 as group 1) 
-# Due to keeping weeks consistent, each year starting from 2014-11-18 is counted as 51 weeks
+# Label groups by year (e.g. 2014-11-18 ~ 2015-11-16 as group 1)  
+# Each year starting from 2014-11-18 is counted as 51 weeks
 data.complete$Year_Group <- NA
 data.complete$Year_Group[263:314] <- 1
 data.complete$Year_Group[211:262] <- 2
@@ -71,7 +76,8 @@ data.complete$Year_Group[159:210] <- 3
 data.complete$Year_Group[107:158] <- 4
 data.complete$Year_Group[55:106] <- 5
 data.complete$Year_Group[3:54] <- 6
-#two weeks are left out, so we exclude them from the dataset
+
+#two weeks are left out, so we exclude them from the data set
 data.complete <- data.complete[3:314,]
 ```
 
@@ -85,8 +91,11 @@ First, I will investigate the duration of drought in each year and their pattern
 The yearly average of percentage under each drought category can be derived using group_by & summarise_at from the dplyr package, and the result is:
 
 ```{r aggregate mean area,echo=FALSE}
-data.year.mean.area <- group_by(data.complete, Year_Group) %>%
-  summarise_at(vars(Area_None, Area_D0, Area_D1, Area_D2, Area_D3, Area_D4), mean, na.rm = TRUE) 
+data.year.mean.area <- 
+  group_by(data.complete, Year_Group) %>% 
+  summarise_at(vars(Area_None, Area_D0, Area_D1, Area_D2, Area_D3, Area_D4), 
+               mean, na.rm = TRUE) 
+
 kable(data.year.mean.area)
 ```
 
@@ -94,8 +103,11 @@ In terms of areas under each categories, it is clear that there are some discrep
 
 Now lets look at the populations and check on the average percent affected by drought:
 ```{r aggregate mean pop,echo=FALSE}
-data.year.mean.pop <- group_by(data.complete, Year_Group) %>%
-  summarise_at(vars(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3, Pop_D4), mean, na.rm = TRUE) 
+data.year.mean.pop <- 
+  group_by(data.complete, Year_Group) %>%
+  summarise_at(vars(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3, Pop_D4), 
+               mean, na.rm = TRUE) 
+
 kable(data.year.mean.pop)
 ```
 And now, to answer the question of if the proportions of each drought categories have been consistent throughout the years, a MANOVA test is used. Much like ANOVA, MANOVA simply adds a "multivariate" to the front and the null hypothesis is that the means on multiple dependent variables (in this case the percent land/population under each categories) are equal across groups; the alternative hypothesis is that the variables are not the same, hence the patterns in the recent years are different.
@@ -103,11 +115,16 @@ And now, to answer the question of if the proportions of each drought categories
 ```{r MANOVA, echo=FALSE}
 # Excluding D4 in the process because all entries are 0
 print("Manova on Area")
-manova.area <- manova(cbind(Area_None, Area_D0, Area_D1, Area_D2, Area_D3) ~ Year_Group, data = data.complete)
+manova.area <- manova(cbind(Area_None, Area_D0, Area_D1, Area_D2, Area_D3) ~ 
+                        Year_Group, data = data.complete)
+
 summary(manova.area, tol=0)
+
 print("---------------------------------------------------------")
 print("Manova on population")
-manova.pop <- manova(cbind(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3) ~ Year_Group, data = data.complete)
+manova.pop <- manova(cbind(Pop_None, Pop_D0, Pop_D1, Pop_D2, Pop_D3) ~ 
+                       Year_Group, data = data.complete)
+
 summary(manova.pop, tol=0)
 ```
 From the results of two MANOVA tests above, it is clear to observe that both tests yielded an extremely low P-value, meaning the null hypothesis should be rejected and that the proportions of drought categories change from year to year. Moreover, the __Pillai__ in the summary output is short for "Pillai-Bartlett Trace." It is used as a test statistic in MANOVA, a positive valued statistic ranging from 0 to 1. Increasing values means that effects are contributing more to the model, and from the result both Pillai's trace seems to have pretty high values.
@@ -117,15 +134,23 @@ The DSCI is a proposed way to convert the drought levels to a single value that 
 $$\text{DSCI}= 0 \cdot \text{None} + 1 \cdot D_0 + 2 \cdot D_1 + 3 \cdot D_2 + 4\cdot D_3 + 5\cdot D_4$$
 So after calculating the appropriate DSCI, we can visualize it: 
 ```{r DSCI, out.width='\\textwidth', fig.height = 6, fig.align='center', echo=FALSE}
-data.complete$DSCI_Area = 1 * data.complete$Area_D0 + 2 * data.complete$Area_D1 + 3 * data.complete$Area_D2 + 4 * data.complete$Area_D3 + 5 * data.complete$Area_D4
+data.complete$DSCI_Area = 1 * data.complete$Area_D0 + 
+  2 * data.complete$Area_D1 + 3 * data.complete$Area_D2 + 
+  4 * data.complete$Area_D3 + 5 * data.complete$Area_D4
 
-data.complete$DSCI_Pop = 1 * data.complete$Pop_D0 + 2 * data.complete$Pop_D1 + 3 * data.complete$Pop_D2 + 4 * data.complete$Pop_D3 + 5 * data.complete$Pop_D4
+data.complete$DSCI_Pop = 1 * data.complete$Pop_D0 + 
+  2 * data.complete$Pop_D1 + 3 * data.complete$Pop_D2 + 
+  4 * data.complete$Pop_D3 + 5 * data.complete$Pop_D4
 
 DSCI <- ggplot(data = data.complete) + 
-  geom_line(aes(x = ValidStart, y = DSCI_Area, colour = "Area"), size = 1, alpha = 0.7) + 
-  geom_line(aes(x = ValidStart, y = DSCI_Pop, colour = "Population"), size = 1, alpha = 0.7) + 
-  labs(title="Drought Severity And Coverage Index of Rhode Island (2014 - 2020)", x ="Date", y = "DSCI") +
-  scale_colour_manual(name = "Variable of Interest", values=c(Area ="yellow4", Population="brown")) +
+  geom_line(aes(x = ValidStart, y = DSCI_Area, colour = "Area"), 
+            size = 1, alpha = 0.7) + 
+  geom_line(aes(x = ValidStart, y = DSCI_Pop, colour = "Population"), 
+            size = 1, alpha = 0.7) + 
+  labs(title="Drought Severity And Coverage Index of Rhode Island (2014 - 2020)", 
+       x ="Date", y = "DSCI") +
+  scale_colour_manual(name = "Variable of Interest", 
+                      values=c(Area ="yellow4", Population="brown")) +
   theme_classic()
 DSCI
 ```
@@ -136,7 +161,8 @@ The graph above provides a good representation of the drought severity, however,
 Here is an overview of DSCI(Area) plotted against DSCI(Population):
 ```{r correlation, out.width='\\textwidth', fig.height = 4, fig.align='center', echo=FALSE, message=FALSE}
 corr <- ggscatter(data.complete, x = "DSCI_Area", y = "DSCI_Pop", 
-          add = "reg.line", add.params = list(color = "blue", fill = "lightgray"), 
+          add = "reg.line", 
+          add.params = list(color = "blue", fill = "lightgray"), 
           conf.int = TRUE, 
           cor.coef = TRUE, cor.method = "pearson",
           xlab = "Area Index", ylab = "Population Index")
@@ -146,12 +172,28 @@ The plot actually shows a pretty solid linear correlations, however, the outlier
   
 To do so, I first calculated the absolute proportional differences between __DSCI_Area__ and __DSCI_Pop__ $$\frac{|\text{DSCI}_{Area} - \text{DSCI}_{population}|}{\text{DSCI}_{Area} + \text{DSCI}_{population}}$$, and look at dates that are interesting. 
 ```{r diff, include=FALSE}
-data.complete$DSCI_Diff = abs(data.complete$DSCI_Area - data.complete$DSCI_Pop) / (data.complete$DSCI_Area + data.complete$DSCI_Pop)
+data.complete$DSCI_Diff = abs(
+  data.complete$DSCI_Area - 
+    data.complete$DSCI_Pop) / (data.complete$DSCI_Area + data.complete$DSCI_Pop)
+
 data.complete$DSCI_Diff = data.complete$DSCI_Area - data.complete$DSCI_Pop
 ```
-Here are two examples of weeks where Index values differ a lot between population and area. 
-![2015-07-28, when DSCI_Area = 2 * DSCI_Pop](path-to-image-here)
+Here are two examples of weeks where Index values differ a lot between population and area.  
+Left: 2015-07-28, when DSCI_Area = 2 * DSCI_Pop,  
+Right: 2020-08-25, when DSCI_Pop = 20 + DSCI_Area
+```{r Image, out.width = "60%", fig.align='center', echo=FALSE}
+knitr::include_graphics("20150728_20200825.png")
+```
+When the drought is more severe in the south of RI, because there's not much population, the DSCI Area index would be higher; on the other hand, when the drought is more concentrated in the North, including Providence, more population is affected than the relative percentage of the land.
 
+***
 
+# Conclusion
+The drought in Rhode Island has been proven historical, and even though in common conception usually fall is a season that lacks natural rainfall and other means of water, the magnitude of this year's drought, in comparison to previous 5 years, is not comparable and predictable. In addition, further investigations on drought levels should be reminded to use a combination of residents affected as well as land area affected. As shown previously, only considering one factor may misrepresent the situation. 
 
+\newpage
 
+# Appendix
+```{r ref.label=knitr::all_labels(), echo = T, eval = F}
+```
+For complete project repository please go to https://github.com/guozhaosengzs/ENVDS/tree/master/final_project. 
